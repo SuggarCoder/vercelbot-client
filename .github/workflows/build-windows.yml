@@ -90,11 +90,11 @@ jobs:
       - name: Typecheck chatbot
         run: pnpm run typecheck:chatbot
 
-      - name: Check gpas-app Rust crate
-        run: pnpm run check:gpas-app
-
       - name: Build chatbot
         run: pnpm run build:chatbot
+
+      - name: Check gpas-app Rust crate
+        run: pnpm run check:gpas-app
 
       - name: Build gpas-app for Windows
         run: pnpm --dir apps/gpas-app tauri build

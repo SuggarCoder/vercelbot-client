@@ -85,6 +85,9 @@ jobs:
       - name: Typecheck chatbot
         run: pnpm run typecheck:chatbot
 
+      - name: Build chatbot
+        run: pnpm run build:chatbot
+
       - name: Check gpas-app Rust crate
         run: pnpm run check:gpas-app
 
