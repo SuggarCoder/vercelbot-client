@@ -1,0 +1,98 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Existing tag to release, for example v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    env:
+      CI: true
+      CARGO_TERM_COLOR: always
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/gpas-app/src-tauri
+
+      - name: Install workspace dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Create chatbot .env.local
+        shell: pwsh
+        env:
+          CHATBOT_CENTRAL_API_BASE_URL: ${{ secrets.CHATBOT_CENTRAL_API_BASE_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHATBOT_CENTRAL_API_BASE_URL)) {
+            throw "Missing GitHub secret CHATBOT_CENTRAL_API_BASE_URL"
+          }
+
+          "VITE_CENTRAL_API_BASE_URL=$env:CHATBOT_CENTRAL_API_BASE_URL" |
+            Set-Content -Path "apps/chatbot/.env.local" -Encoding utf8NoBOM
+
+      - name: Create gpas-app config
+        shell: pwsh
+        env:
+          CHATBOT_CENTRAL_API_BASE_URL: ${{ secrets.CHATBOT_CENTRAL_API_BASE_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHATBOT_CENTRAL_API_BASE_URL)) {
+            throw "Missing GitHub secret CHATBOT_CENTRAL_API_BASE_URL"
+          }
+
+          @"
+          {
+            "remoteApiBaseUrl": "$env:CHATBOT_CENTRAL_API_BASE_URL",
+            "allowedCommands": []
+          }
+          "@ | Set-Content -Path "apps/gpas-app/gpas.config.json" -Encoding utf8NoBOM
+
+      - name: Typecheck chatbot
+        run: pnpm run typecheck:chatbot
+
+      - name: Check gpas-app Rust crate
+        run: pnpm run check:gpas-app
+
+      - name: Build and release Windows app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/gpas-app
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: gpas-app ${{ env.RELEASE_TAG }}
+          releaseBody: |
+            Automated Windows release for ${{ env.RELEASE_TAG }}.
+          releaseDraft: false
+          prerelease: false

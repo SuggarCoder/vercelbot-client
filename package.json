@@ -1,0 +1,13 @@
+{
+  "name": "vercelbot-client",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build:chatbot": "pnpm --dir apps/chatbot build",
+    "typecheck:chatbot": "pnpm --dir apps/chatbot typecheck",
+    "dev:gpas-app": "pnpm --dir apps/gpas-app tauri dev",
+    "build:gpas-app": "pnpm --dir apps/gpas-app tauri build",
+    "build:gpas-app:debug": "pnpm --dir apps/gpas-app tauri build --debug",
+    "check:gpas-app": "cargo check --manifest-path apps/gpas-app/src-tauri/Cargo.toml"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "remoteApiBaseUrl": "https://your-server.example.com/api",
+  "allowedCommands": []
+}
