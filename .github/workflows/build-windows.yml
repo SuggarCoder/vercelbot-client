@@ -61,14 +61,8 @@ jobs:
 
       - name: Create chatbot .env.local
         shell: pwsh
-        env:
-          CHATBOT_CENTRAL_API_BASE_URL: ${{ secrets.CHATBOT_CENTRAL_API_BASE_URL }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:CHATBOT_CENTRAL_API_BASE_URL)) {
-            throw "Missing GitHub secret CHATBOT_CENTRAL_API_BASE_URL"
-          }
-
-          "VITE_CENTRAL_API_BASE_URL=$env:CHATBOT_CENTRAL_API_BASE_URL" |
+          "VITE_CENTRAL_API_BASE_URL=/api" |
             Set-Content -Path "apps/chatbot/.env.local" -Encoding utf8NoBOM
 
       - name: Create gpas-app config
